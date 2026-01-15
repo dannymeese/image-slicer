@@ -6,6 +6,7 @@ const hoverLine = document.getElementById("hoverLine");
 const hoverLabel = document.getElementById("hoverLabel");
 const sliceLayer = document.getElementById("sliceLayer");
 const sliceButton = document.getElementById("sliceButton");
+const clearButton = document.getElementById("clearButton");
 const fileInput = document.getElementById("fileInput");
 const hintText = document.getElementById("hintText");
 const orientationToggle = document.getElementById("orientationToggle");
@@ -19,6 +20,9 @@ let sliceLines = {
 let dragState = null;
 let dragCounter = 0;
 let activeOrientation = "horizontal";
+let toggleDragging = false;
+let toggleDragged = false;
+let toggleStartX = 0;
 
 const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
 
@@ -29,7 +33,9 @@ const resetState = () => {
   };
   sliceLayer.innerHTML = "";
   sliceButton.disabled = true;
-  sliceButton.style.display = "none";
+  sliceButton.classList.add("hidden");
+  clearButton.disabled = true;
+  clearButton.classList.add("hidden");
 };
 
 const setDragActive = (isActive) => {
@@ -43,6 +49,29 @@ const setDragActive = (isActive) => {
     hint.setAttribute("aria-label", "Drop an image anywhere");
     hint.style.display = imageMeta ? "none" : "flex";
   }
+};
+
+const setOrientation = (orientation) => {
+  if (orientation === activeOrientation) {
+    return;
+  }
+  activeOrientation = orientation;
+  orientationToggle.classList.toggle(
+    "is-vertical",
+    activeOrientation === "vertical"
+  );
+  toggleButtons.forEach((item) => {
+    const isActive = item.dataset.orientation === activeOrientation;
+    item.classList.toggle("is-active", isActive);
+    item.setAttribute("aria-pressed", String(isActive));
+  });
+  hoverLine.style.display = "none";
+};
+
+const getToggleOrientation = (clientX) => {
+  const rect = orientationToggle.getBoundingClientRect();
+  const midpoint = rect.left + rect.width / 2;
+  return clientX < midpoint ? "horizontal" : "vertical";
 };
 
 const showImage = (fileName, dataUrl) => {
@@ -67,9 +96,18 @@ const showImage = (fileName, dataUrl) => {
     hoverLine.style.display = "none";
     hoverLabel.style.top = "-9999px";
     sliceButton.disabled = false;
-    sliceButton.style.display = "inline-flex";
+    sliceButton.classList.remove("hidden");
+    clearButton.disabled = true;
+    clearButton.classList.add("hidden");
     syncSlicePointsToImage();
   };
+};
+
+const updateClearButton = () => {
+  const hasLines =
+    sliceLines.horizontal.length > 0 || sliceLines.vertical.length > 0;
+  clearButton.disabled = !hasLines;
+  clearButton.classList.toggle("hidden", !hasLines);
 };
 
 const getImageRects = () => {
@@ -205,6 +243,7 @@ const addSliceLine = (orientation, naturalPos, anchorCross) => {
   };
   sliceLines[orientation].push(line);
   renderSliceLines();
+  updateClearButton();
 };
 
 const renderSliceLines = () => {
@@ -240,6 +279,7 @@ const renderSliceLines = () => {
         (item) => item.id !== line.id
       );
       renderSliceLines();
+      updateClearButton();
     });
 
     element.addEventListener("pointerdown", (event) => {
@@ -355,6 +395,9 @@ const updateHoverLine = (event) => {
     hoverLine.style.width = `${bounds.right - bounds.left}px`;
     hoverLine.style.height = "1px";
     hoverLabel.textContent = `${naturalY}PX`;
+    hoverLabel.style.top = `${event.clientY}px`;
+    hoverLabel.style.left = `${Math.max(imageRect.left, 8)}px`;
+    hoverLabel.style.transform = "translateY(-50%)";
   } else {
     const eligibleHorizontals = getPerpendicularLinesAtCross(
       "vertical",
@@ -375,10 +418,10 @@ const updateHoverLine = (event) => {
     hoverLine.style.height = `${bounds.right - bounds.left}px`;
     hoverLine.style.width = "1px";
     hoverLabel.textContent = `${naturalX}PX`;
+    hoverLabel.style.top = `${imageRect.top}px`;
+    hoverLabel.style.left = `${event.clientX}px`;
+    hoverLabel.style.transform = "translate(-50%, 0)";
   }
-
-  hoverLabel.style.top = `${event.clientY}px`;
-  hoverLabel.style.left = `${Math.max(imageRect.left, 8)}px`;
 };
 
 const handlePointerMove = (event) => {
@@ -820,18 +863,51 @@ window.addEventListener("resize", syncSlicePointsToImage);
 
 sliceButton.addEventListener("click", downloadSlices);
 
-toggleButtons.forEach((button) => {
-  button.addEventListener("click", () => {
-    const orientation = button.dataset.orientation;
-    if (orientation === activeOrientation) {
-      return;
-    }
-    activeOrientation = orientation;
-    toggleButtons.forEach((item) => {
-      const isActive = item.dataset.orientation === activeOrientation;
-      item.classList.toggle("is-active", isActive);
-      item.setAttribute("aria-pressed", String(isActive));
-    });
-    hoverLine.style.display = "none";
-  });
+clearButton.addEventListener("click", () => {
+  sliceLines = {
+    horizontal: [],
+    vertical: [],
+  };
+  renderSliceLines();
+  updateClearButton();
+});
+
+orientationToggle.addEventListener("click", () => {
+  if (toggleDragged) {
+    toggleDragged = false;
+    return;
+  }
+  const next =
+    activeOrientation === "horizontal" ? "vertical" : "horizontal";
+  setOrientation(next);
+});
+
+orientationToggle.addEventListener("pointerdown", (event) => {
+  toggleDragging = true;
+  toggleDragged = false;
+  toggleStartX = event.clientX;
+  orientationToggle.setPointerCapture(event.pointerId);
+  event.preventDefault();
+});
+
+orientationToggle.addEventListener("pointermove", (event) => {
+  if (!toggleDragging) {
+    return;
+  }
+  const delta = Math.abs(event.clientX - toggleStartX);
+  if (delta >= 6) {
+    toggleDragged = true;
+    setOrientation(getToggleOrientation(event.clientX));
+  }
+});
+
+orientationToggle.addEventListener("pointerup", (event) => {
+  if (!toggleDragging) {
+    return;
+  }
+  toggleDragging = false;
+  if (toggleDragged) {
+    setOrientation(getToggleOrientation(event.clientX));
+  }
+  orientationToggle.releasePointerCapture(event.pointerId);
 });

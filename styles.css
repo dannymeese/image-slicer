@@ -43,20 +43,36 @@ body {
 .controls {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 0;
+}
+
+.controls > * + * {
+  margin-left: 3px;
+}
+
+.controls > .hidden {
+  margin-left: 0;
+}
+
+.controls > .hidden + * {
+  margin-left: 0;
 }
 
 .toggle {
+  --toggle-pad: 2px;
+  --toggle-size: 28px;
   display: inline-flex;
   border: 1px solid #fff;
   border-radius: 999px;
   overflow: hidden;
-  padding: 2px;
+  padding: var(--toggle-pad);
+  position: relative;
+  height: calc(var(--toggle-size) + (var(--toggle-pad) * 2) + 2px);
 }
 
 .toggle-btn {
-  width: 32px;
-  height: 24px;
+  width: var(--toggle-size);
+  height: var(--toggle-size);
   background: transparent;
   border: 0;
   cursor: pointer;
@@ -64,13 +80,27 @@ body {
   align-items: center;
   justify-content: center;
   border-radius: 999px;
+  pointer-events: none;
+  position: relative;
+  z-index: 1;
 }
 
-.toggle-btn:hover {
+.toggle:hover {
   opacity: 0.75;
 }
-.toggle-btn.is-active {
+.toggle-indicator {
+  position: absolute;
+  top: var(--toggle-pad);
+  left: var(--toggle-pad);
+  width: var(--toggle-size);
+  height: var(--toggle-size);
+  border-radius: 999px;
   background: #fff;
+  transition: transform 140ms ease;
+}
+
+.toggle.is-vertical .toggle-indicator {
+  transform: translateX(var(--toggle-size));
 }
 
 .toggle-icon {
@@ -82,7 +112,10 @@ body {
   fill: #fff;
 }
 
-.toggle-btn.is-active .toggle-icon rect {
+.toggle.is-vertical .toggle-btn[data-orientation="vertical"] .toggle-icon rect,
+.toggle:not(.is-vertical)
+  .toggle-btn[data-orientation="horizontal"]
+  .toggle-icon rect {
   fill: #000;
 }
 
@@ -91,8 +124,9 @@ body {
 }
 .brand {
   font-size: 16px;
-  letter-spacing: 0.08em;
+  letter-spacing: 0;
   text-transform: uppercase;
+  font-weight: 700;
 }
 
 .btn {
@@ -103,16 +137,60 @@ body {
   font-size: 14px;
   cursor: pointer;
   border-radius: 999px;
+  transition:
+    opacity 333ms ease,
+    transform 333ms ease,
+    width 333ms ease,
+    margin-left 333ms ease,
+    padding 333ms ease,
+    border-width 333ms ease;
+  transition-delay:
+    160ms,
+    0ms,
+    0ms,
+    0ms,
+    0ms,
+    0ms;
+  flex: 0 0 auto;
+  min-width: 0;
+  overflow: hidden;
+  transform: translateY(0) scale(1);
 }
 
 .btn:disabled {
-  display: none;
   opacity: 0.4;
   cursor: not-allowed;
 }
 
 .btn:hover {
   opacity: 0.75;
+}
+
+.btn.outline {
+  background: transparent;
+  color: #fff;
+}
+
+.btn.clear {
+  border-color: #ff3b30;
+  color: #ff3b30;
+}
+
+.btn.hidden {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(2px) scale(0);
+  width: 0;
+  padding: 0;
+  border-width: 0;
+  flex: 0 0 0;
+  transition-delay:
+    0ms,
+    160ms,
+    160ms,
+    160ms,
+    160ms,
+    160ms;
 }
 
 .stage {
@@ -163,7 +241,7 @@ body {
   height: 100%;
 }
 
-.hint circle {
+.hint rect {
   fill: none;
   stroke: #fff;
   stroke-width: 2;
@@ -171,7 +249,7 @@ body {
   stroke-linecap: butt;
 }
 
-.stage.drag-over .hint circle {
+.stage.drag-over .hint rect {
   stroke: #000;
 }
 
@@ -305,6 +383,7 @@ body {
 
 .move-icon {
   display: block;
+  transform: scale(0.66);
 }
 
 .slice-point.horizontal .move-handle {
@@ -320,7 +399,7 @@ body {
 }
 
 .slice-point.horizontal .move-icon {
-  transform: rotate(90deg);
+  transform: rotate(90deg) scale(0.66);
 }
 
 .slice-point.vertical .remove-btn {

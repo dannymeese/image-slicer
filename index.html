@@ -8,9 +8,11 @@
   </head>
   <body>
     <header class="top-bar">
-      <div class="brand">Email Slicer</div>
+      <div class="brand">IMAGE SLICER</div>
       <div class="controls">
+        <button id="clearButton" class="btn outline clear hidden" disabled>Clear</button>
         <div class="toggle" id="orientationToggle" role="group" aria-label="Slice orientation">
+          <div class="toggle-indicator" aria-hidden="true"></div>
           <button type="button" class="toggle-btn is-active" data-orientation="horizontal" aria-pressed="true">
             <svg class="toggle-icon horizontal" viewBox="0 0 2 19" aria-hidden="true">
               <rect x="0" y="0" width="2" height="5"></rect>
@@ -26,14 +28,14 @@
             </svg>
           </button>
         </div>
-        <button id="sliceButton" class="btn" disabled>Slice</button>
+        <button id="sliceButton" class="btn hidden" disabled>Slice</button>
       </div>
     </header>
 
     <main class="stage" id="stage">
       <div class="hint" id="hint" aria-label="Drop an image anywhere">
         <svg viewBox="0 0 220 220" aria-hidden="true">
-          <circle cx="110" cy="110" r="100"></circle>
+          <rect x="10" y="10" width="200" height="200"></rect>
         </svg>
         <span class="hint-plus">+</span>
         <span class="hint-text" id="hintText">Release to add</span>
