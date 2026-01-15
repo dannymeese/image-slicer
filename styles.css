@@ -272,8 +272,8 @@ body {
 }
 
 .slice-point.horizontal::before {
-  left: -20px;
-  right: -20px;
+  left: 0;
+  right: 0;
   height: 1px;
   border-top: 1px dashed #fff;
 }
@@ -287,7 +287,7 @@ body {
 
 .slice-point .move-handle {
   position: absolute;
-  left: -44px;
+  left: 0;
   top: -12px;
   width: 24px;
   height: 24px;
@@ -303,22 +303,33 @@ body {
   border-radius: 999px;
 }
 
+.move-icon {
+  display: block;
+}
+
 .slice-point.horizontal .move-handle {
-  transform: rotate(90deg);
+  transform: translateX(-100%);
+  border-radius: 999px 0 0 999px;
 }
 
 .slice-point.vertical .move-handle {
   left: 50%;
-  top: -12px;
-  transform: translateX(-50%);
+  top: 0;
+  transform: translateX(-50%) translateY(-100%);
+  border-radius: 999px 999px 0 0;
+}
+
+.slice-point.horizontal .move-icon {
+  transform: rotate(90deg);
 }
 
 .slice-point.vertical .remove-btn {
   right: auto;
   left: 50%;
-  bottom: -12px;
-  top: auto;
+  top: 100%;
+  bottom: auto;
   transform: translateX(-50%);
+  border-radius: 0 0 999px 999px;
 }
 
 .slice-point .move-handle:hover {
@@ -327,7 +338,7 @@ body {
 
 .slice-point .remove-btn {
   position: absolute;
-  right: -44px;
+  right: 0;
   top: -12px;
   width: 24px;
   height: 24px;
@@ -338,6 +349,11 @@ body {
   line-height: 20px;
   cursor: pointer;
   border-radius: 999px;
+}
+
+.slice-point.horizontal .remove-btn {
+  transform: translateX(100%);
+  border-radius: 0 999px 999px 0;
 }
 
 .slice-point .remove-btn:hover {

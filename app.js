@@ -141,39 +141,67 @@ const getScreenBounds = (positions, value, toDisplay, minScreen, maxScreen) => {
   };
 };
 
-const addSliceLine = (orientation, naturalPos, anchorCross) => {
-  const verticalPositions = sliceLines.vertical.map((line) => line.naturalPos);
-  const horizontalPositions = sliceLines.horizontal.map(
-    (line) => line.naturalPos
-  );
-  let minCross = 0;
-  let maxCross = 0;
-  if (orientation === "horizontal") {
-    const bounds = getBounds(
-      verticalPositions,
-      anchorCross,
-      0,
+const getNearestLineIds = (lines, value) => {
+  const sorted = lines.slice().sort((a, b) => a.naturalPos - b.naturalPos);
+  let leftId = null;
+  let rightId = null;
+  for (let i = 0; i < sorted.length; i += 1) {
+    if (sorted[i].naturalPos < value) {
+      leftId = sorted[i].id;
+    } else {
+      rightId = sorted[i].id;
+      break;
+    }
+  }
+  return { leftId, rightId };
+};
+
+const getBoundPosition = (id, lines, fallback) => {
+  const match = lines.find((line) => line.id === id);
+  return match ? match.naturalPos : fallback;
+};
+
+const getLineSpan = (line) => {
+  if (line.orientation === "horizontal") {
+    const leftBound = getBoundPosition(line.leftId, sliceLines.vertical, 0);
+    const rightBound = getBoundPosition(
+      line.rightId,
+      sliceLines.vertical,
       imageMeta.naturalWidth
     );
-    minCross = bounds.left;
-    maxCross = bounds.right;
-  } else {
-    const bounds = getBounds(
-      horizontalPositions,
-      anchorCross,
-      0,
-      imageMeta.naturalHeight
-    );
-    minCross = bounds.left;
-    maxCross = bounds.right;
+    return { min: leftBound, max: rightBound };
   }
+  const topBound = getBoundPosition(line.leftId, sliceLines.horizontal, 0);
+  const bottomBound = getBoundPosition(
+    line.rightId,
+    sliceLines.horizontal,
+    imageMeta.naturalHeight
+  );
+  return { min: topBound, max: bottomBound };
+};
+
+const getPerpendicularLinesAtCross = (orientation, crossPos) => {
+  const perpendicular =
+    orientation === "horizontal" ? sliceLines.vertical : sliceLines.horizontal;
+  return perpendicular.filter((line) => {
+    const span = getLineSpan(line);
+    return crossPos >= span.min && crossPos <= span.max;
+  });
+};
+
+const addSliceLine = (orientation, naturalPos, anchorCross) => {
+  const perpendicular = getPerpendicularLinesAtCross(
+    orientation,
+    naturalPos
+  );
+  const { leftId, rightId } = getNearestLineIds(perpendicular, anchorCross);
   const line = {
     id: crypto.randomUUID(),
     orientation,
     naturalPos,
     anchorCross,
-    minCross,
-    maxCross,
+    leftId,
+    rightId,
   };
   sliceLines[orientation].push(line);
   renderSliceLines();
@@ -197,7 +225,10 @@ const renderSliceLines = () => {
 
     const handle = document.createElement("div");
     handle.className = `move-handle ${line.orientation}`;
-    handle.textContent = "↔";
+    const handleIcon = document.createElement("span");
+    handleIcon.className = "move-icon";
+    handleIcon.textContent = "↔";
+    handle.appendChild(handleIcon);
 
     const remove = document.createElement("button");
     remove.type = "button";
@@ -231,19 +262,39 @@ const renderSliceLines = () => {
     element.appendChild(remove);
 
     if (line.orientation === "horizontal") {
-      const leftDisplay = line.minCross / scaleX + offsetX;
-      const rightDisplay = line.maxCross / scaleX + offsetX;
+      const leftBound = getBoundPosition(
+        line.leftId,
+        sliceLines.vertical,
+        0
+      );
+      const rightBound = getBoundPosition(
+        line.rightId,
+        sliceLines.vertical,
+        imageMeta.naturalWidth
+      );
+      const leftDisplay = leftBound / scaleX + offsetX;
+      const rightDisplay = rightBound / scaleX + offsetX;
       const yDisplay = line.naturalPos / scaleY + offsetY;
       element.style.top = `${yDisplay}px`;
-      element.style.left = `${leftDisplay - 20}px`;
-      element.style.width = `${rightDisplay - leftDisplay + 40}px`;
+      element.style.left = `${leftDisplay}px`;
+      element.style.width = `${rightDisplay - leftDisplay}px`;
     } else {
-      const topDisplay = line.minCross / scaleY + offsetY;
-      const bottomDisplay = line.maxCross / scaleY + offsetY;
+      const topBound = getBoundPosition(
+        line.leftId,
+        sliceLines.horizontal,
+        0
+      );
+      const bottomBound = getBoundPosition(
+        line.rightId,
+        sliceLines.horizontal,
+        imageMeta.naturalHeight
+      );
+      const topDisplay = topBound / scaleY + offsetY;
+      const bottomDisplay = bottomBound / scaleY + offsetY;
       const xDisplay = line.naturalPos / scaleX + offsetX;
       element.style.left = `${xDisplay}px`;
-      element.style.top = `${topDisplay - 20}px`;
-      element.style.height = `${bottomDisplay - topDisplay + 40}px`;
+      element.style.top = `${topDisplay}px`;
+      element.style.height = `${bottomDisplay - topDisplay}px`;
       element.style.width = "1px";
       element.style.transform = "translateX(-0.5px)";
     }
@@ -283,15 +334,15 @@ const updateHoverLine = (event) => {
     0,
     imageMeta.naturalHeight
   );
-  const verticalPositions = sliceLines.vertical.map((line) => line.naturalPos);
-  const horizontalPositions = sliceLines.horizontal.map(
-    (line) => line.naturalPos
-  );
-
   hoverLine.style.display = "block";
   hoverLine.className = `hover-line ${activeOrientation}`;
 
   if (activeOrientation === "horizontal") {
+    const eligibleVerticals = getPerpendicularLinesAtCross(
+      "horizontal",
+      naturalY
+    );
+    const verticalPositions = eligibleVerticals.map((line) => line.naturalPos);
     const bounds = getScreenBounds(
       verticalPositions,
       naturalX,
@@ -305,6 +356,13 @@ const updateHoverLine = (event) => {
     hoverLine.style.height = "1px";
     hoverLabel.textContent = `${naturalY}PX`;
   } else {
+    const eligibleHorizontals = getPerpendicularLinesAtCross(
+      "vertical",
+      naturalX
+    );
+    const horizontalPositions = eligibleHorizontals.map(
+      (line) => line.naturalPos
+    );
     const bounds = getScreenBounds(
       horizontalPositions,
       naturalY,
@@ -399,72 +457,164 @@ const downloadSlices = async () => {
   }
   const image = new Image();
   image.onload = async () => {
-    const positions =
-      activeOrientation === "horizontal"
-        ? sliceLines.horizontal.map((line) => line.naturalPos)
-        : sliceLines.vertical.map((line) => line.naturalPos);
-    const clamped = positions
-      .map((value) =>
-        activeOrientation === "horizontal"
-          ? clamp(value, 0, imageMeta.naturalHeight)
-          : clamp(value, 0, imageMeta.naturalWidth)
-      )
-      .filter((value) =>
-        activeOrientation === "horizontal"
-          ? value > 0 && value < imageMeta.naturalHeight
-          : value > 0 && value < imageMeta.naturalWidth
-      )
-      .sort((a, b) => a - b);
+    const verticalLines = sliceLines.vertical;
+    const horizontalLines = sliceLines.horizontal;
+    const xCoords = [
+      0,
+      imageMeta.naturalWidth,
+      ...verticalLines.map((line) => line.naturalPos),
+    ];
+    const yCoords = [
+      0,
+      imageMeta.naturalHeight,
+      ...horizontalLines.map((line) => line.naturalPos),
+    ];
+    const uniqueSorted = (values) =>
+      Array.from(new Set(values)).sort((a, b) => a - b);
+    const xs = uniqueSorted(xCoords);
+    const ys = uniqueSorted(yCoords);
 
-    const boundaries =
-      activeOrientation === "horizontal"
-        ? [0, ...clamped, imageMeta.naturalHeight]
-        : [0, ...clamped, imageMeta.naturalWidth];
-    const files = [];
-    for (let index = 0; index < boundaries.length - 1; index += 1) {
-      const startY = boundaries[index];
-      if (index === boundaries.length - 1) {
-        continue;
+    const horizontalMap = new Map();
+    horizontalLines.forEach((line) => {
+      const xMin = getBoundPosition(line.leftId, verticalLines, 0);
+      const xMax = getBoundPosition(
+        line.rightId,
+        verticalLines,
+        imageMeta.naturalWidth
+      );
+      const entry = horizontalMap.get(line.naturalPos) || [];
+      entry.push({ min: xMin, max: xMax });
+      horizontalMap.set(line.naturalPos, entry);
+    });
+
+    const verticalMap = new Map();
+    verticalLines.forEach((line) => {
+      const yMin = getBoundPosition(line.leftId, horizontalLines, 0);
+      const yMax = getBoundPosition(
+        line.rightId,
+        horizontalLines,
+        imageMeta.naturalHeight
+      );
+      const entry = verticalMap.get(line.naturalPos) || [];
+      entry.push({ min: yMin, max: yMax });
+      verticalMap.set(line.naturalPos, entry);
+    });
+
+    const isBlockedHoriz = (y, xStart, xEnd) => {
+      const segments = horizontalMap.get(y);
+      if (!segments) {
+        return false;
       }
-      const endY = boundaries[index + 1];
-      const span = endY - startY;
-      if (span <= 0) {
+      return segments.some((segment) => segment.min <= xStart && segment.max >= xEnd);
+    };
+
+    const isBlockedVert = (x, yStart, yEnd) => {
+      const segments = verticalMap.get(x);
+      if (!segments) {
+        return false;
+      }
+      return segments.some((segment) => segment.min <= yStart && segment.max >= yEnd);
+    };
+
+    const cellWidth = xs.length - 1;
+    const cellHeight = ys.length - 1;
+    const visited = new Array(cellWidth * cellHeight).fill(false);
+    const cells = [];
+
+    const cellIndex = (i, j) => j * cellWidth + i;
+
+    for (let j = 0; j < cellHeight; j += 1) {
+      for (let i = 0; i < cellWidth; i += 1) {
+        if (visited[cellIndex(i, j)]) {
+          continue;
+        }
+        const queue = [{ i, j }];
+        const component = [];
+        visited[cellIndex(i, j)] = true;
+        while (queue.length) {
+          const current = queue.shift();
+          component.push(current);
+          const xStart = xs[current.i];
+          const xEnd = xs[current.i + 1];
+          const yStart = ys[current.j];
+          const yEnd = ys[current.j + 1];
+
+          if (
+            current.i > 0 &&
+            !isBlockedVert(xs[current.i], yStart, yEnd) &&
+            !visited[cellIndex(current.i - 1, current.j)]
+          ) {
+            visited[cellIndex(current.i - 1, current.j)] = true;
+            queue.push({ i: current.i - 1, j: current.j });
+          }
+          if (
+            current.i < cellWidth - 1 &&
+            !isBlockedVert(xs[current.i + 1], yStart, yEnd) &&
+            !visited[cellIndex(current.i + 1, current.j)]
+          ) {
+            visited[cellIndex(current.i + 1, current.j)] = true;
+            queue.push({ i: current.i + 1, j: current.j });
+          }
+          if (
+            current.j > 0 &&
+            !isBlockedHoriz(ys[current.j], xStart, xEnd) &&
+            !visited[cellIndex(current.i, current.j - 1)]
+          ) {
+            visited[cellIndex(current.i, current.j - 1)] = true;
+            queue.push({ i: current.i, j: current.j - 1 });
+          }
+          if (
+            current.j < cellHeight - 1 &&
+            !isBlockedHoriz(ys[current.j + 1], xStart, xEnd) &&
+            !visited[cellIndex(current.i, current.j + 1)]
+          ) {
+            visited[cellIndex(current.i, current.j + 1)] = true;
+            queue.push({ i: current.i, j: current.j + 1 });
+          }
+        }
+
+        let minI = Infinity;
+        let maxI = -Infinity;
+        let minJ = Infinity;
+        let maxJ = -Infinity;
+        component.forEach((cell) => {
+          minI = Math.min(minI, cell.i);
+          maxI = Math.max(maxI, cell.i);
+          minJ = Math.min(minJ, cell.j);
+          maxJ = Math.max(maxJ, cell.j);
+        });
+        const expectedCount = (maxI - minI + 1) * (maxJ - minJ + 1);
+        if (expectedCount === component.length) {
+          cells.push({
+            x: xs[minI],
+            y: ys[minJ],
+            width: xs[maxI + 1] - xs[minI],
+            height: ys[maxJ + 1] - ys[minJ],
+          });
+        } else {
+          component.forEach((cell) => {
+            cells.push({
+              x: xs[cell.i],
+              y: ys[cell.j],
+              width: xs[cell.i + 1] - xs[cell.i],
+              height: ys[cell.j + 1] - ys[cell.j],
+            });
+          });
+        }
+      }
+    }
+
+    const files = [];
+    for (let index = 0; index < cells.length; index += 1) {
+      const { x, y, width, height } = cells[index];
+      if (width <= 0 || height <= 0) {
         continue;
       }
       const canvas = document.createElement("canvas");
-      if (activeOrientation === "horizontal") {
-        canvas.width = imageMeta.naturalWidth;
-        canvas.height = span;
-      } else {
-        canvas.width = span;
-        canvas.height = imageMeta.naturalHeight;
-      }
+      canvas.width = width;
+      canvas.height = height;
       const ctx = canvas.getContext("2d");
-      if (activeOrientation === "horizontal") {
-        ctx.drawImage(
-          image,
-          0,
-          startY,
-          imageMeta.naturalWidth,
-          span,
-          0,
-          0,
-          imageMeta.naturalWidth,
-          span
-        );
-      } else {
-        ctx.drawImage(
-          image,
-          startY,
-          0,
-          span,
-          imageMeta.naturalHeight,
-          0,
-          0,
-          span,
-          imageMeta.naturalHeight
-        );
-      }
+      ctx.drawImage(image, x, y, width, height, 0, 0, width, height);
       const blob = await new Promise((resolve) =>
         canvas.toBlob(resolve, "image/png")
       );
@@ -472,10 +622,8 @@ const downloadSlices = async () => {
         continue;
       }
       const arrayBuffer = await blob.arrayBuffer();
-      const suffix =
-        activeOrientation === "horizontal" ? "row" : "col";
       files.push({
-        name: `${imageMeta.baseName}-${suffix}-${index + 1}.png`,
+        name: `${imageMeta.baseName}-slice-${index + 1}.png`,
         data: new Uint8Array(arrayBuffer),
       });
     }
