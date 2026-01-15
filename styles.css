@@ -34,11 +34,61 @@ body {
   justify-content: space-between;
   padding: 16px 24px;
   background: rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid rgba(128, 128, 128, 0.33);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   z-index: 10;
 }
 
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.toggle {
+  display: inline-flex;
+  border: 1px solid #fff;
+  border-radius: 999px;
+  overflow: hidden;
+  padding: 2px;
+}
+
+.toggle-btn {
+  width: 32px;
+  height: 24px;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+}
+
+.toggle-btn:hover {
+  opacity: 0.75;
+}
+.toggle-btn.is-active {
+  background: #fff;
+}
+
+.toggle-icon {
+  width: 2px;
+  height: 19px;
+}
+
+.toggle-icon rect {
+  fill: #fff;
+}
+
+.toggle-btn.is-active .toggle-icon rect {
+  fill: #000;
+}
+
+.toggle-icon.horizontal {
+  transform: rotate(90deg);
+}
 .brand {
   font-size: 16px;
   letter-spacing: 0.08em;
@@ -174,13 +224,19 @@ body {
 
 .hover-line {
   position: fixed;
-  left: 0;
-  right: 0;
-  height: 1px;
   background: #fff;
   opacity: 0.8;
   pointer-events: none;
-  top: -9999px;
+  display: none;
+  z-index: 4;
+}
+
+.hover-line.horizontal {
+  height: 1px;
+}
+
+.hover-line.vertical {
+  width: 1px;
 }
 
 .hover-label {
@@ -193,6 +249,7 @@ body {
   pointer-events: none;
   top: -9999px;
   transform: translateY(-50%);
+  z-index: 5;
 }
 
 .slice-layer {
@@ -212,10 +269,20 @@ body {
 .slice-point::before {
   content: "";
   position: absolute;
+}
+
+.slice-point.horizontal::before {
   left: -20px;
   right: -20px;
   height: 1px;
   border-top: 1px dashed #fff;
+}
+
+.slice-point.vertical::before {
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  border-left: 1px dashed #fff;
 }
 
 .slice-point .move-handle {
@@ -234,6 +301,24 @@ body {
   line-height: 1;
   cursor: row-resize;
   border-radius: 999px;
+}
+
+.slice-point.horizontal .move-handle {
+  transform: rotate(90deg);
+}
+
+.slice-point.vertical .move-handle {
+  left: 50%;
+  top: -12px;
+  transform: translateX(-50%);
+}
+
+.slice-point.vertical .remove-btn {
+  right: auto;
+  left: 50%;
+  bottom: -12px;
+  top: auto;
+  transform: translateX(-50%);
 }
 
 .slice-point .move-handle:hover {

@@ -9,7 +9,25 @@
   <body>
     <header class="top-bar">
       <div class="brand">Email Slicer</div>
-      <button id="sliceButton" class="btn" disabled>Slice</button>
+      <div class="controls">
+        <div class="toggle" id="orientationToggle" role="group" aria-label="Slice orientation">
+          <button type="button" class="toggle-btn is-active" data-orientation="horizontal" aria-pressed="true">
+            <svg class="toggle-icon horizontal" viewBox="0 0 2 19" aria-hidden="true">
+              <rect x="0" y="0" width="2" height="5"></rect>
+              <rect x="0" y="7" width="2" height="5"></rect>
+              <rect x="0" y="14" width="2" height="5"></rect>
+            </svg>
+          </button>
+          <button type="button" class="toggle-btn" data-orientation="vertical" aria-pressed="false">
+            <svg class="toggle-icon vertical" viewBox="0 0 2 19" aria-hidden="true">
+              <rect x="0" y="0" width="2" height="5"></rect>
+              <rect x="0" y="7" width="2" height="5"></rect>
+              <rect x="0" y="14" width="2" height="5"></rect>
+            </svg>
+          </button>
+        </div>
+        <button id="sliceButton" class="btn" disabled>Slice</button>
+      </div>
     </header>
 
     <main class="stage" id="stage">

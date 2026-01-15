@@ -8,16 +8,25 @@ const sliceLayer = document.getElementById("sliceLayer");
 const sliceButton = document.getElementById("sliceButton");
 const fileInput = document.getElementById("fileInput");
 const hintText = document.getElementById("hintText");
+const orientationToggle = document.getElementById("orientationToggle");
+const toggleButtons = orientationToggle.querySelectorAll(".toggle-btn");
 
 let imageMeta = null;
-let slicePoints = [];
+let sliceLines = {
+  horizontal: [],
+  vertical: [],
+};
 let dragState = null;
 let dragCounter = 0;
+let activeOrientation = "horizontal";
 
 const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
 
 const resetState = () => {
-  slicePoints = [];
+  sliceLines = {
+    horizontal: [],
+    vertical: [],
+  };
   sliceLayer.innerHTML = "";
   sliceButton.disabled = true;
   sliceButton.style.display = "none";
@@ -52,9 +61,10 @@ const showImage = (fileName, dataUrl) => {
       naturalHeight: sourceImage.naturalHeight,
       displayWidth,
       displayHeight,
-      scale: sourceImage.naturalHeight / displayHeight,
+      scaleX: sourceImage.naturalWidth / displayWidth,
+      scaleY: sourceImage.naturalHeight / displayHeight,
     };
-    hoverLine.style.top = "-9999px";
+    hoverLine.style.display = "none";
     hoverLabel.style.top = "-9999px";
     sliceButton.disabled = false;
     sliceButton.style.display = "inline-flex";
@@ -69,6 +79,7 @@ const getImageRects = () => {
     imageRect,
     wrapRect,
     offsetY: imageRect.top - wrapRect.top,
+    offsetX: imageRect.left - wrapRect.left,
   };
 };
 
@@ -76,52 +87,117 @@ const syncSlicePointsToImage = () => {
   if (!imageMeta) {
     return;
   }
-  const { imageRect, offsetY } = getImageRects();
+  const { imageRect } = getImageRects();
   if (!imageRect.height) {
     return;
   }
-  const scale = imageMeta.naturalHeight / imageRect.height;
+  const scaleY = imageMeta.naturalHeight / imageRect.height;
+  const scaleX = imageMeta.naturalWidth / imageRect.width;
   imageMeta.displayWidth = imageRect.width;
   imageMeta.displayHeight = imageRect.height;
-  imageMeta.scale = scale;
-  slicePoints = slicePoints.map((point) => ({
-    ...point,
-    displayY: point.naturalY / scale + offsetY,
-  }));
-  renderSlicePoints();
+  imageMeta.scaleX = scaleX;
+  imageMeta.scaleY = scaleY;
+  renderSliceLines();
 };
 
-const getRelativeY = (event) => {
+const getScales = () => {
   const { imageRect } = getImageRects();
-  return clamp(event.clientY - imageRect.top, 0, imageRect.height);
-};
-
-const addSlicePoint = (imageY) => {
-  const { imageRect, offsetY } = getImageRects();
-  const scale = imageMeta.naturalHeight / imageRect.height;
-  const clampedY = clamp(imageY, 0, imageRect.height);
-  const naturalY = Math.round(clampedY * scale);
-  const point = {
-    id: crypto.randomUUID(),
-    displayY: clampedY + offsetY,
-    naturalY,
+  return {
+    scaleX: imageMeta.naturalWidth / imageRect.width,
+    scaleY: imageMeta.naturalHeight / imageRect.height,
   };
-  slicePoints.push(point);
-  renderSlicePoints();
 };
 
-const renderSlicePoints = () => {
+const getBounds = (positions, value, min, max) => {
+  const sorted = positions.slice().sort((a, b) => a - b);
+  let left = min;
+  let right = max;
+  for (let i = 0; i < sorted.length; i += 1) {
+    if (sorted[i] < value) {
+      left = sorted[i];
+    } else {
+      right = sorted[i];
+      break;
+    }
+  }
+  return { left, right };
+};
+
+const getScreenBounds = (positions, value, toDisplay, minScreen, maxScreen) => {
+  const sorted = positions.slice().sort((a, b) => a - b);
+  let left = null;
+  let right = null;
+  for (let i = 0; i < sorted.length; i += 1) {
+    if (sorted[i] < value) {
+      left = sorted[i];
+    } else {
+      right = sorted[i];
+      break;
+    }
+  }
+  return {
+    left: left === null ? minScreen : toDisplay(left),
+    right: right === null ? maxScreen : toDisplay(right),
+  };
+};
+
+const addSliceLine = (orientation, naturalPos, anchorCross) => {
+  const verticalPositions = sliceLines.vertical.map((line) => line.naturalPos);
+  const horizontalPositions = sliceLines.horizontal.map(
+    (line) => line.naturalPos
+  );
+  let minCross = 0;
+  let maxCross = 0;
+  if (orientation === "horizontal") {
+    const bounds = getBounds(
+      verticalPositions,
+      anchorCross,
+      0,
+      imageMeta.naturalWidth
+    );
+    minCross = bounds.left;
+    maxCross = bounds.right;
+  } else {
+    const bounds = getBounds(
+      horizontalPositions,
+      anchorCross,
+      0,
+      imageMeta.naturalHeight
+    );
+    minCross = bounds.left;
+    maxCross = bounds.right;
+  }
+  const line = {
+    id: crypto.randomUUID(),
+    orientation,
+    naturalPos,
+    anchorCross,
+    minCross,
+    maxCross,
+  };
+  sliceLines[orientation].push(line);
+  renderSliceLines();
+};
+
+const renderSliceLines = () => {
   sliceLayer.innerHTML = "";
-  slicePoints.forEach((point) => {
+  if (!imageMeta) {
+    return;
+  }
+  const { imageRect, offsetX, offsetY } = getImageRects();
+  if (!imageRect.width || !imageRect.height) {
+    return;
+  }
+  const { scaleX, scaleY } = getScales();
+  const renderLine = (line) => {
     const element = document.createElement("div");
-    element.className = "slice-point";
-    element.style.top = `${point.displayY}px`;
-    element.style.transform = "translateY(-0.5px)";
-    element.dataset.id = point.id;
+    element.className = `slice-point ${line.orientation}`;
+    element.dataset.id = line.id;
+    element.dataset.orientation = line.orientation;
 
     const handle = document.createElement("div");
-    handle.className = "move-handle";
-    handle.textContent = "↕";
+    handle.className = `move-handle ${line.orientation}`;
+    handle.textContent = "↔";
 
     const remove = document.createElement("button");
     remove.type = "button";
@@ -129,8 +205,10 @@ const renderSlicePoints = () => {
     remove.textContent = "×";
     remove.addEventListener("click", (event) => {
       event.stopPropagation();
-      slicePoints = slicePoints.filter((item) => item.id !== point.id);
-      renderSlicePoints();
+      sliceLines[line.orientation] = sliceLines[line.orientation].filter(
+        (item) => item.id !== line.id
+      );
+      renderSliceLines();
     });
 
     element.addEventListener("pointerdown", (event) => {
@@ -138,7 +216,8 @@ const renderSlicePoints = () => {
         return;
       }
       dragState = {
-        id: point.id,
+        id: line.id,
+        orientation: line.orientation,
       };
       document.body.classList.add("dragging");
       event.preventDefault();
@@ -150,8 +229,29 @@ const renderSlicePoints = () => {
 
     element.appendChild(handle);
     element.appendChild(remove);
+
+    if (line.orientation === "horizontal") {
+      const leftDisplay = line.minCross / scaleX + offsetX;
+      const rightDisplay = line.maxCross / scaleX + offsetX;
+      const yDisplay = line.naturalPos / scaleY + offsetY;
+      element.style.top = `${yDisplay}px`;
+      element.style.left = `${leftDisplay - 20}px`;
+      element.style.width = `${rightDisplay - leftDisplay + 40}px`;
+    } else {
+      const topDisplay = line.minCross / scaleY + offsetY;
+      const bottomDisplay = line.maxCross / scaleY + offsetY;
+      const xDisplay = line.naturalPos / scaleX + offsetX;
+      element.style.left = `${xDisplay}px`;
+      element.style.top = `${topDisplay - 20}px`;
+      element.style.height = `${bottomDisplay - topDisplay + 40}px`;
+      element.style.width = "1px";
+      element.style.transform = "translateX(-0.5px)";
+    }
     sliceLayer.appendChild(element);
-  });
+  };
+
+  sliceLines.horizontal.forEach(renderLine);
+  sliceLines.vertical.forEach(renderLine);
 };
 
 const isInsideImage = (event) => {
@@ -169,18 +269,58 @@ const isInsideImage = (event) => {
 
 const updateHoverLine = (event) => {
   if (!isInsideImage(event)) {
-    hoverLine.style.top = "-9999px";
+    hoverLine.style.display = "none";
     hoverLabel.style.top = "-9999px";
     return;
   }
-  const { imageRect } = getImageRects();
-  const y = getRelativeY(event);
-  const scale = imageMeta.naturalHeight / imageRect.height;
-  const naturalY = Math.round(y * scale);
-  hoverLine.style.top = `${event.clientY - 0.5}px`;
+  const { imageRect, offsetX, offsetY } = getImageRects();
+  const { scaleX, scaleY } = getScales();
+  const relX = clamp(event.clientX - imageRect.left, 0, imageRect.width);
+  const relY = clamp(event.clientY - imageRect.top, 0, imageRect.height);
+  const naturalX = clamp(Math.round(relX * scaleX), 0, imageMeta.naturalWidth);
+  const naturalY = clamp(
+    Math.round(relY * scaleY),
+    0,
+    imageMeta.naturalHeight
+  );
+  const verticalPositions = sliceLines.vertical.map((line) => line.naturalPos);
+  const horizontalPositions = sliceLines.horizontal.map(
+    (line) => line.naturalPos
+  );
+
+  hoverLine.style.display = "block";
+  hoverLine.className = `hover-line ${activeOrientation}`;
+
+  if (activeOrientation === "horizontal") {
+    const bounds = getScreenBounds(
+      verticalPositions,
+      naturalX,
+      (value) => imageRect.left + value / scaleX,
+      0,
+      window.innerWidth
+    );
+    hoverLine.style.top = `${event.clientY - 0.5}px`;
+    hoverLine.style.left = `${bounds.left}px`;
+    hoverLine.style.width = `${bounds.right - bounds.left}px`;
+    hoverLine.style.height = "1px";
+    hoverLabel.textContent = `${naturalY}PX`;
+  } else {
+    const bounds = getScreenBounds(
+      horizontalPositions,
+      naturalY,
+      (value) => imageRect.top + value / scaleY,
+      0,
+      window.innerHeight
+    );
+    hoverLine.style.left = `${event.clientX - 0.5}px`;
+    hoverLine.style.top = `${bounds.left}px`;
+    hoverLine.style.height = `${bounds.right - bounds.left}px`;
+    hoverLine.style.width = "1px";
+    hoverLabel.textContent = `${naturalX}PX`;
+  }
+
   hoverLabel.style.top = `${event.clientY}px`;
   hoverLabel.style.left = `${Math.max(imageRect.left, 8)}px`;
-  hoverLabel.textContent = `${naturalY}PX`;
 };
 
 const handlePointerMove = (event) => {
@@ -190,21 +330,42 @@ const handlePointerMove = (event) => {
   updateHoverLine(event);
 
   if (dragState) {
-    const y = getRelativeY(event);
-    slicePoints = slicePoints.map((point) => {
-      if (point.id !== dragState.id) {
-        return point;
-      }
-      const { imageRect, offsetY } = getImageRects();
-      const scale = imageMeta.naturalHeight / imageRect.height;
-      const clampedY = clamp(y, 0, imageRect.height);
-      return {
-        ...point,
-        displayY: clampedY + offsetY,
-        naturalY: Math.round(clampedY * scale),
-      };
-    });
-    renderSlicePoints();
+    const { imageRect } = getImageRects();
+    const { scaleX, scaleY } = getScales();
+    const relX = clamp(event.clientX - imageRect.left, 0, imageRect.width);
+    const relY = clamp(event.clientY - imageRect.top, 0, imageRect.height);
+    if (dragState.orientation === "horizontal") {
+      const naturalY = clamp(
+        Math.round(relY * scaleY),
+        0,
+        imageMeta.naturalHeight
+      );
+      sliceLines.horizontal = sliceLines.horizontal.map((line) => {
+        if (line.id !== dragState.id) {
+          return line;
+        }
+        return {
+          ...line,
+          naturalPos: naturalY,
+        };
+      });
+    } else {
+      const naturalX = clamp(
+        Math.round(relX * scaleX),
+        0,
+        imageMeta.naturalWidth
+      );
+      sliceLines.vertical = sliceLines.vertical.map((line) => {
+        if (line.id !== dragState.id) {
+          return line;
+        }
+        return {
+          ...line,
+          naturalPos: naturalX,
+        };
+      });
+    }
+    renderSliceLines();
   }
 };
 
@@ -238,12 +399,27 @@ const downloadSlices = async () => {
   }
   const image = new Image();
   image.onload = async () => {
-    const points = slicePoints
-      .map((point) => clamp(point.naturalY, 0, imageMeta.naturalHeight))
-      .filter((value) => value > 0 && value < imageMeta.naturalHeight)
+    const positions =
+      activeOrientation === "horizontal"
+        ? sliceLines.horizontal.map((line) => line.naturalPos)
+        : sliceLines.vertical.map((line) => line.naturalPos);
+    const clamped = positions
+      .map((value) =>
+        activeOrientation === "horizontal"
+          ? clamp(value, 0, imageMeta.naturalHeight)
+          : clamp(value, 0, imageMeta.naturalWidth)
+      )
+      .filter((value) =>
+        activeOrientation === "horizontal"
+          ? value > 0 && value < imageMeta.naturalHeight
+          : value > 0 && value < imageMeta.naturalWidth
+      )
       .sort((a, b) => a - b);
 
-    const boundaries = [0, ...points, imageMeta.naturalHeight];
+    const boundaries =
+      activeOrientation === "horizontal"
+        ? [0, ...clamped, imageMeta.naturalHeight]
+        : [0, ...clamped, imageMeta.naturalWidth];
     const files = [];
     for (let index = 0; index < boundaries.length - 1; index += 1) {
       const startY = boundaries[index];
@@ -251,25 +427,44 @@ const downloadSlices = async () => {
         continue;
       }
       const endY = boundaries[index + 1];
-      const height = endY - startY;
-      if (height <= 0) {
+      const span = endY - startY;
+      if (span <= 0) {
         continue;
       }
       const canvas = document.createElement("canvas");
-      canvas.width = imageMeta.naturalWidth;
-      canvas.height = height;
+      if (activeOrientation === "horizontal") {
+        canvas.width = imageMeta.naturalWidth;
+        canvas.height = span;
+      } else {
+        canvas.width = span;
+        canvas.height = imageMeta.naturalHeight;
+      }
       const ctx = canvas.getContext("2d");
-      ctx.drawImage(
-        image,
-        0,
-        startY,
-        imageMeta.naturalWidth,
-        height,
-        0,
-        0,
-        imageMeta.naturalWidth,
-        height
-      );
+      if (activeOrientation === "horizontal") {
+        ctx.drawImage(
+          image,
+          0,
+          startY,
+          imageMeta.naturalWidth,
+          span,
+          0,
+          0,
+          imageMeta.naturalWidth,
+          span
+        );
+      } else {
+        ctx.drawImage(
+          image,
+          startY,
+          0,
+          span,
+          imageMeta.naturalHeight,
+          0,
+          0,
+          span,
+          imageMeta.naturalHeight
+        );
+      }
       const blob = await new Promise((resolve) =>
         canvas.toBlob(resolve, "image/png")
       );
@@ -277,8 +472,10 @@ const downloadSlices = async () => {
         continue;
       }
       const arrayBuffer = await blob.arrayBuffer();
+      const suffix =
+        activeOrientation === "horizontal" ? "row" : "col";
       files.push({
-        name: `${imageMeta.baseName}-slice-${index + 1}.png`,
+        name: `${imageMeta.baseName}-${suffix}-${index + 1}.png`,
         data: new Uint8Array(arrayBuffer),
       });
     }
@@ -452,8 +649,21 @@ stage.addEventListener("click", (event) => {
   if (!isInsideImage(event)) {
     return;
   }
-  const y = getRelativeY(event);
-  addSlicePoint(y);
+  const { imageRect } = getImageRects();
+  const { scaleX, scaleY } = getScales();
+  const relX = clamp(event.clientX - imageRect.left, 0, imageRect.width);
+  const relY = clamp(event.clientY - imageRect.top, 0, imageRect.height);
+  const naturalX = clamp(Math.round(relX * scaleX), 0, imageMeta.naturalWidth);
+  const naturalY = clamp(
+    Math.round(relY * scaleY),
+    0,
+    imageMeta.naturalHeight
+  );
+  if (activeOrientation === "horizontal") {
+    addSliceLine("horizontal", naturalY, naturalX);
+  } else {
+    addSliceLine("vertical", naturalX, naturalY);
+  }
 });
 
 document.addEventListener("pointermove", handlePointerMove);
@@ -461,3 +671,19 @@ document.addEventListener("pointerup", handlePointerUp);
 window.addEventListener("resize", syncSlicePointsToImage);
 
 sliceButton.addEventListener("click", downloadSlices);
+
+toggleButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    const orientation = button.dataset.orientation;
+    if (orientation === activeOrientation) {
+      return;
+    }
+    activeOrientation = orientation;
+    toggleButtons.forEach((item) => {
+      const isActive = item.dataset.orientation === activeOrientation;
+      item.classList.toggle("is-active", isActive);
+      item.setAttribute("aria-pressed", String(isActive));
+    });
+    hoverLine.style.display = "none";
+  });
+});
