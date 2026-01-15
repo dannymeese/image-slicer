@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Email Slicer</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header class="top-bar">
+      <div class="brand">Email Slicer</div>
+      <button id="sliceButton" class="btn" disabled>Slice</button>
+    </header>
+
+    <main class="stage" id="stage">
+      <div class="hint" id="hint" aria-label="Drop an image anywhere">
+        <svg viewBox="0 0 220 220" aria-hidden="true">
+          <circle cx="110" cy="110" r="100"></circle>
+        </svg>
+        <span class="hint-plus">+</span>
+        <span class="hint-text" id="hintText">Release to add</span>
+      </div>
+
+      <div class="image-wrap" id="imageWrap" aria-hidden="true">
+        <img id="sourceImage" alt="Dropped preview" />
+        <div class="hover-line" id="hoverLine"></div>
+        <div class="hover-label" id="hoverLabel"></div>
+        <div class="slice-layer" id="sliceLayer"></div>
+      </div>
+    </main>
+
+    <input
+      type="file"
+      id="fileInput"
+      accept="image/*"
+      class="file-input"
+      aria-hidden="true"
+    />
+
+    <script src="./app.js"></script>
+  </body>
+</html>

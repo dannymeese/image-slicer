@@ -1,0 +1,264 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+:root {
+  color-scheme: light;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: #000000;
+  color: #ffffff;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.top-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  z-index: 10;
+}
+
+.brand {
+  font-size: 16px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.btn {
+  border: 1px solid #fff;
+  background: #fff;
+  color: #000;
+  padding: 8px 18px;
+  font-size: 14px;
+  cursor: pointer;
+  border-radius: 999px;
+}
+
+.btn:disabled {
+  display: none;
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.btn:hover {
+  opacity: 0.75;
+}
+
+.stage {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  overflow-y: auto;
+  background: #000;
+  padding: 120px 0 24px;
+}
+
+.stage.drag-over {
+  background: #fff;
+  color: #000;
+}
+
+.stage.drag-over .hint {
+  color: #fff;
+}
+
+
+.hint {
+  width: 220px;
+  height: 220px;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 48px;
+  line-height: 1;
+  cursor: pointer;
+  z-index: 2;
+}
+
+.hint:hover {
+  opacity: 0.75;
+}
+
+.hint svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.hint circle {
+  fill: none;
+  stroke: #fff;
+  stroke-width: 2;
+  stroke-dasharray: 14 21;
+  stroke-linecap: butt;
+}
+
+.stage.drag-over .hint circle {
+  stroke: #000;
+}
+
+.hint-plus,
+.hint-text {
+  position: relative;
+  color: #fff;
+  line-height: 1;
+}
+
+.hint-text {
+  display: none;
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.stage.drag-over .hint-plus {
+  display: none;
+}
+
+.stage.drag-over .hint-text {
+  display: block;
+  color: #000;
+}
+
+.file-input {
+  display: none;
+}
+
+.image-wrap {
+  position: relative;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  max-width: calc(100vw - 160px);
+}
+
+.image-wrap img {
+  max-width: calc(100vw - 160px);
+  height: auto;
+  display: block;
+  user-select: none;
+  pointer-events: none;
+}
+
+.stage.drag-over .image-wrap img {
+  opacity: 0.33;
+}
+
+.hover-line {
+  position: fixed;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: #fff;
+  opacity: 0.8;
+  pointer-events: none;
+  top: -9999px;
+}
+
+.hover-label {
+  position: fixed;
+  left: 0;
+  font-size: 8px;
+  padding: 2px 4px;
+  background: #fff;
+  color: #000;
+  pointer-events: none;
+  top: -9999px;
+  transform: translateY(-50%);
+}
+
+.slice-layer {
+  position: absolute;
+  inset: 0;
+}
+
+.slice-point {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 0;
+  display: block;
+  cursor: row-resize;
+}
+
+.slice-point::before {
+  content: "";
+  position: absolute;
+  left: -20px;
+  right: -20px;
+  height: 1px;
+  border-top: 1px dashed #fff;
+}
+
+.slice-point .move-handle {
+  position: absolute;
+  left: -44px;
+  top: -12px;
+  width: 24px;
+  height: 24px;
+  border: 1px solid #fff;
+  background: #fff;
+  color: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 21px;
+  line-height: 1;
+  cursor: row-resize;
+  border-radius: 999px;
+}
+
+.slice-point .move-handle:hover {
+  opacity: 0.75;
+}
+
+.slice-point .remove-btn {
+  position: absolute;
+  right: -44px;
+  top: -12px;
+  width: 24px;
+  height: 24px;
+  border: 1px solid #fff;
+  background: #fff;
+  color: #000;
+  font-size: 18px;
+  line-height: 20px;
+  cursor: pointer;
+  border-radius: 999px;
+}
+
+.slice-point .remove-btn:hover {
+  opacity: 0.75;
+}
+
+.dragging {
+  cursor: row-resize;
+}
