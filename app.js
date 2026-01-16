@@ -69,6 +69,9 @@ const setOrientation = (orientation) => {
     item.setAttribute("aria-pressed", String(isActive));
   });
   hoverLine.style.display = "none";
+  if (lastPointer && !dragState && !isScrolling) {
+    updateHoverLine(lastPointer);
+  }
 };
 
 const getToggleOrientation = (clientX) => {
@@ -873,6 +876,26 @@ stage.addEventListener("click", (event) => {
 document.addEventListener("pointermove", handlePointerMove);
 document.addEventListener("pointerup", handlePointerUp);
 window.addEventListener("resize", syncSlicePointsToImage);
+document.addEventListener("keydown", (event) => {
+  if (
+    event.target instanceof HTMLElement &&
+    (event.target.tagName === "INPUT" ||
+      event.target.tagName === "TEXTAREA" ||
+      event.target.isContentEditable)
+  ) {
+    return;
+  }
+  if (event.key === "h" || event.key === "H") {
+    setOrientation("horizontal");
+  } else if (event.key === "v" || event.key === "V") {
+    setOrientation("vertical");
+  } else if (event.key === "Tab" || event.key === " ") {
+    event.preventDefault();
+    const next =
+      activeOrientation === "horizontal" ? "vertical" : "horizontal";
+    setOrientation(next);
+  }
+});
 stage.addEventListener("scroll", () => {
   if (!imageMeta) {
     return;

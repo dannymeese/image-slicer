@@ -58,6 +58,14 @@ body {
   margin-left: 0;
 }
 
+.controls > .btn.clear.hidden {
+  margin-left: 3px;
+}
+
+.controls > .btn.clear.hidden + * {
+  margin-left: 3px;
+}
+
 .toggle {
   --toggle-pad: 2px;
   --toggle-size: 28px;
@@ -145,7 +153,7 @@ body {
     padding 333ms ease,
     border-width 333ms ease;
   transition-delay:
-    160ms,
+    333ms,
     0ms,
     0ms,
     0ms,
@@ -174,6 +182,8 @@ body {
 .btn.clear {
   border-color: #ff3b30;
   color: #ff3b30;
+  transition: opacity 333ms ease;
+  transition-delay: 0ms;
 }
 
 .btn.hidden {
@@ -184,13 +194,28 @@ body {
   padding: 0;
   border-width: 0;
   flex: 0 0 0;
+  transition-duration:
+    333ms,
+    0ms,
+    333ms,
+    333ms,
+    333ms,
+    333ms;
   transition-delay:
     0ms,
-    160ms,
-    160ms,
-    160ms,
-    160ms,
-    160ms;
+    333ms,
+    333ms,
+    333ms,
+    333ms,
+    333ms;
+}
+
+.btn.clear.hidden {
+  transform: translateY(0) scale(1);
+  width: auto;
+  padding: 8px 18px;
+  border-width: 1px;
+  flex: 0 0 auto;
 }
 
 .stage {
