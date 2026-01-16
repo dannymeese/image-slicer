@@ -35,6 +35,15 @@ body {
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   z-index: 10;
+  overflow: hidden;
+}
+
+.top-bar::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.33);
+  pointer-events: none;
 }
 
 .top-bar-inner {
@@ -45,6 +54,8 @@ body {
   width: 100%;
   max-width: 1200px;
   margin: 0 auto;
+  position: relative;
+  z-index: 1;
 }
 
 .top-bar-inner .brand {
@@ -232,8 +243,8 @@ body {
 }
 
 .btn.clear {
-  border-color: #ff3b30;
-  color: #ff3b30;
+  border-color: #fff;
+  color: #fff;
   transition: opacity 333ms ease;
   transition-delay: 0ms;
 }
