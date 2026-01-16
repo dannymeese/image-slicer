@@ -23,6 +23,9 @@ let activeOrientation = "horizontal";
 let toggleDragging = false;
 let toggleDragged = false;
 let toggleStartX = 0;
+let lastPointer = null;
+let scrollTimeout = null;
+let isScrolling = false;
 
 const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
 
@@ -428,7 +431,17 @@ const handlePointerMove = (event) => {
   if (!imageMeta) {
     return;
   }
-  updateHoverLine(event);
+  lastPointer = { clientX: event.clientX, clientY: event.clientY };
+  if (dragState) {
+    hoverLine.style.display = "none";
+    hoverLabel.style.top = "-9999px";
+  }
+  if (isScrolling) {
+    return;
+  }
+  if (!dragState) {
+    updateHoverLine(lastPointer);
+  }
 
   if (dragState) {
     const { imageRect } = getImageRects();
@@ -860,6 +873,23 @@ stage.addEventListener("click", (event) => {
 document.addEventListener("pointermove", handlePointerMove);
 document.addEventListener("pointerup", handlePointerUp);
 window.addEventListener("resize", syncSlicePointsToImage);
+stage.addEventListener("scroll", () => {
+  if (!imageMeta) {
+    return;
+  }
+  isScrolling = true;
+  hoverLine.style.display = "none";
+  hoverLabel.style.top = "-9999px";
+  if (scrollTimeout) {
+    clearTimeout(scrollTimeout);
+  }
+  scrollTimeout = setTimeout(() => {
+    isScrolling = false;
+    if (lastPointer) {
+      updateHoverLine(lastPointer);
+    }
+  }, 140);
+});
 
 sliceButton.addEventListener("click", downloadSlices);
 

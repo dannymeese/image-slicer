@@ -32,7 +32,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 24px;
+  padding: 6px 24px;
   background: rgba(255, 255, 255, 0.05);
   border-bottom: 1px solid rgba(128, 128, 128, 0.33);
   backdrop-filter: blur(12px);
@@ -302,19 +302,74 @@ body {
 
 .hover-line {
   position: fixed;
-  background: #fff;
+  background: transparent;
   opacity: 0.8;
   pointer-events: none;
   display: none;
   z-index: 4;
+  --dash-length: 18px;
+  --dash-gap: 9px;
+}
+
+.hover-line::before,
+.hover-line::after {
+  content: "";
+  position: absolute;
+}
+
+.hover-line::before {
+  background: #000;
+  z-index: 0;
+}
+
+.hover-line::after {
+  z-index: 1;
 }
 
 .hover-line.horizontal {
   height: 1px;
 }
 
+.hover-line.horizontal::before {
+  left: 0;
+  right: 0;
+  height: 1px;
+}
+
+.hover-line.horizontal::after {
+  left: 0;
+  right: 0;
+  height: 1px;
+  background-image: repeating-linear-gradient(
+    90deg,
+    #f9d94a 0,
+    #f9d94a var(--dash-length),
+    transparent var(--dash-length),
+    transparent calc(var(--dash-length) + var(--dash-gap))
+  );
+}
+
 .hover-line.vertical {
   width: 1px;
+}
+
+.hover-line.vertical::before {
+  top: 0;
+  bottom: 0;
+  width: 1px;
+}
+
+.hover-line.vertical::after {
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background-image: repeating-linear-gradient(
+    180deg,
+    #f9d94a 0,
+    #f9d94a var(--dash-length),
+    transparent var(--dash-length),
+    transparent calc(var(--dash-length) + var(--dash-gap))
+  );
 }
 
 .hover-label {
@@ -342,27 +397,62 @@ body {
   height: 0;
   display: block;
   cursor: row-resize;
+  z-index: 1;
+  --dash-length: 18px;
+  --dash-gap: 9px;
 }
 
 .slice-point::before {
   content: "";
   position: absolute;
+  z-index: 1;
+}
+
+.slice-point::after {
+  content: "";
+  position: absolute;
+  z-index: 0;
 }
 
 .slice-point.horizontal::before {
   left: 0;
   right: 0;
   height: 1px;
-  border-top: 1px dashed #fff;
+  background-image: repeating-linear-gradient(
+    90deg,
+    #fff 0,
+    #fff var(--dash-length),
+    transparent var(--dash-length),
+    transparent calc(var(--dash-length) + var(--dash-gap))
+  );
+}
+
+.slice-point.horizontal::after {
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: #000;
 }
 
 .slice-point.vertical::before {
   top: 0;
   bottom: 0;
   width: 1px;
-  border-left: 1px dashed #fff;
+  background-image: repeating-linear-gradient(
+    180deg,
+    #fff 0,
+    #fff var(--dash-length),
+    transparent var(--dash-length),
+    transparent calc(var(--dash-length) + var(--dash-gap))
+  );
 }
 
+.slice-point.vertical::after {
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: #000;
+}
 .slice-point .move-handle {
   position: absolute;
   left: 0;
