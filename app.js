@@ -101,11 +101,10 @@ const showImage = (fileName, dataUrl) => {
     };
     hoverLine.style.display = "none";
     hoverLabel.style.top = "-9999px";
-    sliceButton.disabled = false;
-    sliceButton.classList.remove("hidden");
-    clearButton.disabled = true;
-    clearButton.classList.add("hidden");
+    sliceButton.disabled = true;
+    sliceButton.classList.add("hidden");
     syncSlicePointsToImage();
+    updateClearButton();
   };
 };
 
@@ -114,6 +113,8 @@ const updateClearButton = () => {
     sliceLines.horizontal.length > 0 || sliceLines.vertical.length > 0;
   clearButton.disabled = !hasLines;
   clearButton.classList.toggle("hidden", !hasLines);
+  sliceButton.disabled = !hasLines;
+  sliceButton.classList.toggle("hidden", !hasLines);
 };
 
 const getImageRects = () => {

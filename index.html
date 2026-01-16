@@ -8,9 +8,8 @@
   </head>
   <body>
     <header class="top-bar">
-      <div class="brand">IMAGE SLICER</div>
-      <div class="controls">
-        <button id="clearButton" class="btn outline clear hidden" disabled>Clear</button>
+      <div class="top-bar-inner">
+        <div class="brand">IMAGE SLICER</div>
         <div class="toggle" id="orientationToggle" role="group" aria-label="Slice orientation">
           <div class="toggle-indicator" aria-hidden="true"></div>
           <button type="button" class="toggle-btn is-active" data-orientation="horizontal" aria-pressed="true">
@@ -28,7 +27,10 @@
             </svg>
           </button>
         </div>
-        <button id="sliceButton" class="btn hidden" disabled>Slice</button>
+        <div class="controls">
+          <button id="clearButton" class="btn outline clear no-scale hidden" disabled>Clear</button>
+          <button id="sliceButton" class="btn no-scale hidden" disabled>Slice</button>
+        </div>
       </div>
     </header>
 

@@ -29,15 +29,34 @@ body {
   left: 0;
   right: 0;
   top: 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 6px 24px;
+  padding: 6px 12px;
   background: rgba(255, 255, 255, 0.05);
   border-bottom: 1px solid rgba(128, 128, 128, 0.33);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   z-index: 10;
+}
+
+.top-bar-inner {
+  display: grid;
+  align-items: center;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 12px;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.top-bar-inner .brand {
+  justify-self: start;
+}
+
+.top-bar-inner .toggle {
+  justify-self: center;
+}
+
+.top-bar-inner .controls {
+  justify-self: end;
 }
 
 .controls {
@@ -63,6 +82,14 @@ body {
 }
 
 .controls > .btn.clear.hidden + * {
+  margin-left: 3px;
+}
+
+.controls > .btn.no-scale.hidden {
+  margin-left: 3px;
+}
+
+.controls > .btn.no-scale.hidden + * {
   margin-left: 3px;
 }
 
@@ -165,6 +192,17 @@ body {
   transform: translateY(0) scale(1);
 }
 
+.btn.no-scale {
+  transition:
+    opacity 333ms ease,
+    width 333ms ease,
+    margin-left 333ms ease,
+    padding 333ms ease,
+    border-width 333ms ease;
+  transition-delay: 0ms, 0ms, 0ms, 0ms, 0ms;
+  transform: translateY(0) scale(1);
+}
+
 .btn:disabled {
   opacity: 0.4;
   cursor: not-allowed;
@@ -172,6 +210,20 @@ body {
 
 .btn:hover {
   opacity: 0.75;
+  transition-duration:
+    0ms,
+    333ms,
+    333ms,
+    333ms,
+    333ms,
+    333ms;
+  transition-delay:
+    0ms,
+    0ms,
+    0ms,
+    0ms,
+    0ms,
+    0ms;
 }
 
 .btn.outline {
@@ -208,6 +260,15 @@ body {
     333ms,
     333ms,
     333ms;
+}
+
+.btn.no-scale.hidden {
+  transform: translateY(0) scale(1);
+  transition-duration: 333ms, 333ms, 333ms, 333ms, 333ms;
+  width: auto;
+  padding: 8px 18px;
+  border-width: 1px;
+  flex: 0 0 auto;
 }
 
 .btn.clear.hidden {
