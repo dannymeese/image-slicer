@@ -2,7 +2,13 @@
 
 Simple browser tool to add slice lines to an image and export the slices.
 
-[Live tool](https://dannymeese.github.io/image-slicer/)
+[Use the live tool](https://dannymeese.github.io/image-slicer/)
+
+## Why did I make this?
+
+Email designs often need image slicing so you can build table-based HTML layouts
+that render reliably in email clients. This makes it easy to export precise image
+segments for use in ESPs like Klaviyo.
 
 ## Keyboard shortcuts
 
