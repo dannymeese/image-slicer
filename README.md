@@ -40,5 +40,6 @@ segments for use in ESPs like Klaviyo.
 
 ## Credits
 
+- Designed, prompted and QA'd by Danny Meese
 - Typeface: Archivo by Omnibus-Type (Héctor Gatti)
 - GitHub Pages for hosting
