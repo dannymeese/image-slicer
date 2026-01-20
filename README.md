@@ -32,7 +32,7 @@ segments for use in ESPs like Klaviyo.
 
 ## Tech stack
 
-– Agentically coded in Cursor IDE with GPT-5.2-Codex (MAX Mode) without a human ever touching code or terminal.
+- Agentically coded in Cursor IDE with GPT-5.2-Codex (MAX Mode) without a human ever touching code or terminal.
 - HTML, CSS, and vanilla JavaScript
 - Client-side canvas slicing via the Canvas API (`drawImage`)
 - ZIP export using a custom in-browser ZIP builder
