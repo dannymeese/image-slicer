@@ -21,3 +21,15 @@ Simple browser tool to add slice lines to an image and export the slices.
 
 - Use the hover guide to preview the exact pixel position.
 - Add lines in both orientations to create a grid of slices.
+
+## Tech stack
+
+- HTML, CSS, and vanilla JavaScript
+- Client-side canvas slicing via the Canvas API (`drawImage`)
+- ZIP export using a custom in-browser ZIP builder
+- Hosted on GitHub Pages
+
+## Credits
+
+- Typeface: Archivo by Omnibus-Type (Héctor Gatti)
+- GitHub Pages for hosting
