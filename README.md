@@ -2,6 +2,8 @@
 
 Simple browser tool to add slice lines to an image and export the slices.
 
+[Live tool](https://dannymeese.github.io/image-slicer/)
+
 ## Keyboard shortcuts
 
 - `H` → Horizontal slices
