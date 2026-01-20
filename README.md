@@ -43,3 +43,8 @@ segments for use in ESPs like Klaviyo.
 - Designed, prompted and QA'd by Danny Meese
 - Typeface: Archivo by Omnibus-Type (Héctor Gatti)
 - GitHub Pages for hosting
+
+## Usage rights
+
+Free and open source for personal or educational use. Not permitted for
+commercial use.
